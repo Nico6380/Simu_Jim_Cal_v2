@@ -1073,12 +1073,6 @@ void Refresca_Display(void)
 		HAL_GPIO_WritePin(BCD_Out_D_GPIO_Port, BCD_Out_D_Pin, 1);
 		break;
 
-	case 9:
-		HAL_GPIO_WritePin(BCD_Out_A_GPIO_Port, BCD_Out_A_Pin, 1);
-		HAL_GPIO_WritePin(BCD_Out_B_GPIO_Port, BCD_Out_B_Pin, 0);
-		HAL_GPIO_WritePin(BCD_Out_C_GPIO_Port, BCD_Out_C_Pin, 0);
-		HAL_GPIO_WritePin(BCD_Out_D_GPIO_Port, BCD_Out_D_Pin, 1);
-		break;
 	}
 
 	//Habilito el digito que corresponda en el display, si se puede mostrar
