@@ -96,13 +96,16 @@ void Lectura_Trama_Puestos (void);	// Guarda las constantes de los medidores baj
 
 void Genera_Trama_ACK_ERROR (void); //Genera la trama a transmitir que contiene el ACK
 void Genera_Trama_RLT (void);  		//Genera la trama a transmitir que contiene los resultados
-void Genera_Valores_RLT (int); 	//Genera los valores que se van a usar para los resultados
+void Genera_Valores_RLT (int); 	//Genera los valores que se van a usar para los resultados de contraste
+void Genera_Valores_AYV (int, int); 	//Genera los valores que se van a usar para los resultados de arranque y vacio
 
 int  Valida_Entradas (void);	//Mira las entradas y escribe en el display
 
 void Envio_tx (void);	//Transmite el vector tx
 
 void Refresca_Display(void);
+
+int Calcula_Relacion (int, int); //Calcula la relacion para arranque y vacio
 
 
 /* USER CODE END PFP */
@@ -138,6 +141,8 @@ uint16_t l_max=269;	//Es la cantidad maxima de caracteres que puede tener una tr
 uint8_t  l_min = 27; 	//Es la cantidad minima de caracteres que puede tener una trama mensaje mas corto
 
 uint8_t imprime_display=0;	//Flag para mistrar resultados en el display
+uint8_t cont_AYV=0; //Contador para arranque y vacio
+uint8_t relacion_AYV; //Relación para arraque y vacio
 
 //Variables para la generación de errores:
 uint8_t p_hab[21];	//Puestos habilitados 1->hab, 0->deshab
@@ -156,6 +161,7 @@ uint8_t f_rlt=0;	//Flag de solicitud de resultados.
 //Variables para el envío de respuestas
 uint8_t e0=0;	//Caracter del codigo del error
 uint8_t e1=0;	//Caracter del codigo del error
+
 
 
 /* USER CODE END 0 */
@@ -257,24 +263,42 @@ int main(void)
 
 					  if(f_rlt==1) //Pide resultados
 					  {
-						  //Actualizamos los valores cada 5 pedidos de resultados
-						  if (f_rlt_up==0)
+						  if (tens==1) //Ensayo de contraste
 						  {
-							  Genera_Valores_RLT(Error_rx);
+							  //Actualizamos los valores cada 5 pedidos de resultados
+							  if (f_rlt_up==0)
+							  {
+								  Genera_Valores_RLT(Error_rx);
+							  }
+
+							  f_rlt_up++;
+
+							  if(f_rlt_up==5)
+							  {
+								  f_rlt_up=0;
+							  }
+
+							  //Habilita la impresión en display
+							  imprime_display=1;
+							  Genera_Trama_RLT();
+							  Envio_tx();
+							  f_rlt=0;
 						  }
 
-						  f_rlt_up++;
-
-						  if(f_rlt_up==5)
+						  if (tens==2 || tens==3) //Ensayo de arranque y vacio
 						  {
-							  f_rlt_up=0;
-						  }
+							  relacion_AYV=Calcula_Relacion(Error_rx,tens);
 
-						  //Habilita la impresión en display
-						  imprime_display=1;
-						  Genera_Trama_RLT();
-						  Envio_tx();
-						  f_rlt=0;
+							  Genera_Valores_AYV(cont_AYV, relacion_AYV);
+
+							  cont_AYV++;
+
+							  //Habilita la impresión en display
+							  imprime_display=1;
+							  Genera_Trama_RLT();
+							  Envio_tx();
+							  f_rlt=0;
+						  }
 						  //Genera resultados y los envía
 					  }
 					  else
@@ -291,6 +315,7 @@ int main(void)
 				  }
 				  else if (tens==5)	//Pide el Stop
 				  {
+					  cont_AYV=0;
 					  //Apago led testigo de la placa y en el frente
 					  HAL_GPIO_WritePin(Test_GPIO_Port, Test_Pin, 1);
 					  HAL_GPIO_WritePin(LED_V_GPIO_Port, LED_V_Pin, 0);
@@ -965,6 +990,23 @@ void Genera_Valores_RLT (int error) 	//Genera los valores que se van a usar para
 
 } //Genera_Valores_RLT
 
+void Genera_Valores_AYV (int contador, int relacion) 	//Genera los valores que se van a usar para los resultados
+{
+	uint8_t i=0;
+
+	//Genera los valores. Si la llave está en cero el error es menor a 1%, sino es mayor
+
+	for(i=0;i<=79;i+=4)
+	{
+		//Guarda en ascii
+		v_rlt[i]  = 0 + 48;
+		v_rlt[i+1]= 0 + 48;
+		v_rlt[i+2]= 0 + 48;
+		v_rlt[i+3]= (contador/relacion) + 48;
+	}
+
+} //Genera_Valores_RLT
+
 
 int Valida_Entradas (void)
 {
@@ -1130,6 +1172,36 @@ void Refresca_Display(void)
 	{
 		i=0;
 	}
+
+}
+
+int Calcula_Relacion (int Error_rx, int tens)
+{
+	//Arranque funcionando ok
+	if (tens==2 && Error_rx==0)
+	{
+		return(1);
+	}
+
+	//Arranque funcionando mal
+	if (tens==2 && Error_rx==1)
+	{
+		return(4);
+	}
+
+	//Vacio funcionando ok
+	if (tens==3 && Error_rx==0)
+	{
+		return(4);
+	}
+
+	//Vacio funcionando mal
+	if (tens==3 && Error_rx==1)
+	{
+		return(1);
+	}
+
+	return (1);
 
 }
 
