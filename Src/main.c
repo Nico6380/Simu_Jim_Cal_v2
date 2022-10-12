@@ -204,10 +204,20 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim2);
 
-  //Apago el led de la placa y en el frente
-  HAL_GPIO_WritePin(Test_GPIO_Port, Test_Pin, 1);
+  //Secuencia de arranque con leds en el frente
   HAL_GPIO_WritePin(LED_V_GPIO_Port, LED_V_Pin, 0);
   HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, 0);
+
+  HAL_Delay(1000);
+  HAL_GPIO_WritePin(LED_V_GPIO_Port, LED_V_Pin, 1);
+  HAL_Delay(1000);
+  HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, 1);
+  HAL_Delay(1000);
+  HAL_GPIO_WritePin(LED_V_GPIO_Port, LED_V_Pin, 0);
+  HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, 0);
+
+  //Apago el led en la placa y en el frente
+  HAL_GPIO_WritePin(Test_GPIO_Port, Test_Pin, 1);
 
 
   /* USER CODE END 2 */
@@ -319,7 +329,7 @@ int main(void)
 					  //Apago led testigo de la placa y en el frente
 					  HAL_GPIO_WritePin(Test_GPIO_Port, Test_Pin, 1);
 					  HAL_GPIO_WritePin(LED_V_GPIO_Port, LED_V_Pin, 0);
-					  HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, 1);
+					  HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, 0);
 					  imprime_display=0;
 					  //Reporta
 					  Genera_Trama_ACK_ERROR();
